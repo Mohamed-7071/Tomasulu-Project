@@ -33,35 +33,35 @@ public class Parse {
             return DIV_S(token[1], token[2], token[3]);
             //DIV.S F1, F2, F3
             case "LW":
-            return LW(token[1], token[2], token[3]);
-            //LW R1, 0(R2)
-            case "LD":
-            return LD(token[1], token[2], token[3]);
-            //LD R1, 0(R2)
-            case "L.S":
-            return L_S(token[1], token[2], token[3]);
-            //L.S F1, 0(R2)
-            case "L.D":
-            return L_D(token[1], token[2], token[3]);
-            //L.D F1, 0(R2)
-            case "SW":
-            return SW(token[1], token[2], token[3]);
-            //SW R1, 0(R2)
-            case "SD":
-            return SD(token[1], token[2], token[3]);
-            //SD R1, 0(R2)
-            case "S.S":
-            return S_S(token[1], token[2], token[3]);
-            //S.S F1, 0(R2)
-            case "S.D":
-            return S_D(token[1], token[2], token[3]);
-            //S.D F1, 0(R2)
-            case "BNE":
-            return BNE(token[1], token[2], token[3]);
-            //BNE R1, R2, label
-            case "BEQ":
-            return BEQ(token[1], token[2], token[3]);
-            //BEQ R1, R2, label
+            // return LW(token[1], token[2], token[3]);
+            // //LW R1, 0(R2)
+            // case "LD":
+            // return LD(token[1], token[2], token[3]);
+            // //LD R1, 0(R2)
+            // case "L.S":
+            // return L_S(token[1], token[2], token[3]);
+            // //L.S F1, 0(R2)
+            // case "L.D":
+            // return L_D(token[1], token[2], token[3]);
+            // //L.D F1, 0(R2)
+            // case "SW":
+            // return SW(token[1], token[2], token[3]);
+            // //SW R1, 0(R2)
+            // case "SD":
+            // return SD(token[1], token[2], token[3]);
+            // //SD R1, 0(R2)
+            // case "S.S":
+            // return S_S(token[1], token[2], token[3]);
+            // //S.S F1, 0(R2)
+            // case "S.D":
+            // return S_D(token[1], token[2], token[3]);
+            // //S.D F1, 0(R2)
+            // case "BNE":
+            // return BNE(token[1], token[2], token[3]);
+            // //BNE R1, R2, label
+            // case "BEQ":
+            // return BEQ(token[1], token[2], token[3]);
+            // //BEQ R1, R2, label
             default:
             return false;
         }

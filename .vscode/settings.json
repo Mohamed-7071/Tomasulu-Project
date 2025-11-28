@@ -55,5 +55,19 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
-  "C_Cpp_Runner.msvcSecureNoWarnings": false
+  "C_Cpp_Runner.msvcSecureNoWarnings": false,
+  "java.project.referencedLibraries": [
+    "lib/**/*.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.base.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.controls.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.fxml.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.graphics.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.media.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.swing.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx.web.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\javafx-swt.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\jdk.jsobject.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\jfx.incubator.input.jar",
+    "c:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\\jfx.incubator.richtext.jar"
+  ]
 }

@@ -4,6 +4,7 @@ import java.util.Comparator;
 
 
 public class Main {
+public class pair {Buffer_Station value;String tag;public pair(Buffer_Station value, String tag) {this.value = value;this.tag = tag;}public Buffer_Station getValue() {return value;}public String getTag() {return tag;}}
 public static boolean running=true;
 public static int cycle = 0;    
 public static int curInstruction = 0;
@@ -15,11 +16,11 @@ static HashMap<String, Reservation_Station> Integer_Stations = new HashMap<>();
 static HashMap<String, Buffer> Load_Buffer = new HashMap<>();
 static HashMap<String, Buffer> Store_Buffer = new HashMap<>();
 public static int[] cache = new int[30];
-public static PriorityQueue<String> toBePublished = new PriorityQueue<>(new Comparator<String>() {
+public static PriorityQueue<pair> toBePublished = new PriorityQueue<>(new Comparator<pair>() {
     @Override
-    public int compare(String tag1, String tag2) {
-        int count1 = countDependencies(tag1);
-        int count2 = countDependencies(tag2);
+    public int compare(pair tag1, pair tag2) {
+        int count1 = countDependencies(tag1.getTag());
+        int count2 = countDependencies(tag2.getTag());
         return Integer.compare(count2, count1); // Higher count = higher priority
     }
 });
@@ -65,6 +66,8 @@ public static void initialize(){
     Buffer.InitializeBuffer(Lcapacity, Load_Buffer,"I");
     Buffer.InitializeBuffer(Scapacity, Store_Buffer,"S");
 }
+
+
 public static void publish(){
 for(String key : Add_Stations.keySet()){
     Add_Stations.get(key).publish(key);
@@ -81,53 +84,38 @@ for(String key : Load_Buffer.keySet()){
 for(String key : Store_Buffer.keySet()){
     Store_Buffer.get(key).publish(key);
 }
-for(String key : registerMap.keySet()){
-    registerMap.get(key).publish(key);}
 
-    String CDB = toBePublished.remove();
-    
+    pair CDB = toBePublished.remove();
+    String tag = CDB.getTag();
+    Buffer_Station Bstation = CDB.getValue();
+    int output = Bstation.output;
 
      for(Reservation_Station station : Add_Stations.values()) {
-        station.fillFromCDB(CDB,);
+        station.fillFromCDB(tag,output);
         }
-    }
     
-    // Count in Mul_Stations
     for(Reservation_Station station : Mul_Stations.values()) {
-        if(tag.equals(station.Qj) || tag.equals(station.Qk)) {
-            count++;
+        station.fillFromCDB(tag,output);
         }
-    }
     
-    // Count in Integer_Stations
     for(Reservation_Station station : Integer_Stations.values()) {
-        if(tag.equals(station.Qj) || tag.equals(station.Qk)) {
-            count++;
-        }
+        station.fillFromCDB(tag,output);
     }
     
-    // Count in Load_Buffer (checking Q field if it's a tag)
     for(Buffer buffer : Load_Buffer.values()) {
-        if(buffer.Q != 0 && tag.equals("L" + buffer.Q)) {
-            count++;
+        buffer.fillFromCDB(tag,output);
         }
-    }
     
-    // Count in Store_Buffer (checking Q field if it's a tag)
+    
     for(Buffer buffer : Store_Buffer.values()) {
-        if(buffer.Q != 0 && tag.equals("S" + buffer.Q)) {
-            count++;
+        buffer.fillFromCDB(tag,output);
         }
-    }
-    
-    // Count in registers
+
     for(Register register : registerMap.values()) {
-        if(tag.equals(register.Qi)) {
-            count++;
+        register.fillFromCDB(tag,output);
         }
 
 }
-
 
 public static void run(){
 for(Reservation_Station station:Add_Stations.values()){
@@ -211,14 +199,14 @@ public static int countDependencies(String tag) {
     
     // Count in Load_Buffer (checking Q field if it's a tag)
     for(Buffer buffer : Load_Buffer.values()) {
-        if(buffer.Q != 0 && tag.equals("L" + buffer.Q)) {
+        if(buffer.Q != null && tag.equals("L" + buffer.Q)) {
             count++;
         }
     }
     
     // Count in Store_Buffer (checking Q field if it's a tag)
     for(Buffer buffer : Store_Buffer.values()) {
-        if(buffer.Q != 0 && tag.equals("S" + buffer.Q)) {
+        if(buffer.Q != null && tag.equals("S" + buffer.Q)) {
             count++;
         }
     }

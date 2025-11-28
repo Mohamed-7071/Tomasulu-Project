@@ -1,5 +1,5 @@
 
-public class Register {
+public class Register extends RegBufStat {
 
     int value;
     String Qi;
@@ -23,6 +23,12 @@ public class Register {
         this.Qi = Qi;
     }
 
+    public void fillFromCDB(String tag, int value) {
+        if (this.Qi != null && this.Qi.equals(tag)) {
+            this.value = value;
+            this.Qi = null;
+        }
+    }
 
     public static void InitializeRegisters() {
         Main.registerMap.put("F1", new Register());

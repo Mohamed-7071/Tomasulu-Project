@@ -1,22 +1,13 @@
  import java.util.HashMap;
 
-public class Reservation_Station {
+public class Reservation_Station extends Buffer_Station {
     String op;
     int vj;
     int vk;
     String Qj;
     String Qk;
-    int Busy;
-    int output;
+
     int Executing_Time = -1;
-
-    public boolean IsBusy(){
-        if (Busy ==1)
-            return true;
-        else
-            return false;
-    }
-
     public void issue(String op, int vj, int vk, String Qj, String Qk){
         this.Busy = 1;
         this.op = op;
@@ -27,22 +18,21 @@ public class Reservation_Station {
         this.Executing_Time = Main.getExecutionTime(op);
     }
 
-    public static void InitializeReservationStation(int capacity,int exTime, HashMap<String, Reservation_Station> RS, String prefix){
+    public static void InitializeReservationStation(int capacity, HashMap<String, Reservation_Station> RS, String prefix){
         for(int i = 0; i < capacity; i++){
             RS.put(prefix + i+1, new Reservation_Station() );
         }
     }
 
+    @Override
     public void publish(String tag){
         if(Busy==1 && Executing_Time==0){
-            if(!Main.toBePublished.contains(tag)){
-            Main.toBePublished.add(tag);
+            Main.pair p = new Main().new pair(this, tag);
+            if(!Main.toBePublished.contains(p)){
+                Main.toBePublished.add(p);
             }
-
             Main.toBePublished.remove();
         }
-            
-      
     }
 
     public void fillFromCDB(String tag, int value){
@@ -56,6 +46,7 @@ public class Reservation_Station {
         }
     }
 
+    @Override
     public void clear(){
         this.Busy = 0;
         this.op = null;
@@ -66,9 +57,7 @@ public class Reservation_Station {
         this.Executing_Time = 0;
     }
 
-
-
-
+    @Override
     public void run(){
         if(this.Qj!=null || this.Qk != null)          
             return;

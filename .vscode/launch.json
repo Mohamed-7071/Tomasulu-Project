@@ -2,9 +2,17 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "java",
+      "name": "Main",
+      "request": "launch",
+      "mainClass": "Main",
+      "projectName": "Tomasulu-Project_771fb885"
+    },
+    {
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
+      "vmArgs": "--module-path \"C:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\" --add-modules javafx.controls,javafx.fxml",
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
@@ -19,6 +27,15 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "type": "java",
+      "name": "Launch TomasuloGUI",
+      "request": "launch",
+      "mainClass": "TomasuloGUI",
+      "projectName": "Tomasulu-Project",
+      "vmArgs": "--module-path \"C:\\Mostafa\\Micro Processors\\Java Folder\\javafx-sdk-25.0.1\\lib\" --add-modules javafx.controls,javafx.fxml"
     }
   ]
+
 }
