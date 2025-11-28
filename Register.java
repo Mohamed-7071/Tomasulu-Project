@@ -14,6 +14,15 @@ public class Register {
         }
     }
 
+    public void setValue(int value) {
+        this.value = value;
+        this.Qi = null;
+    }
+
+    public void setQi(String Qi) {
+        this.Qi = Qi;
+    }
+
 
     public static void InitializeRegisters() {
         Main.registerMap.put("F1", new Register());

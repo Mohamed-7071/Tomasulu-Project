@@ -77,6 +77,7 @@ public class Parse {
         for(int i=1;i<=Main.Icapacity;i++){
              if(!Main.Integer_Stations.get("I"+i).IsBusy()){
                 Main.Integer_Stations.get("I" + i).issue("DADDI", vj, vk, Qj, Qk);
+                Main.registerMap.get(Source).setQi("I"+i);
                 return true; 
              }
         }

@@ -19,7 +19,15 @@ public class Buffer {
         }
     }
 
+    public void publish(String tag) {
+        if(Busy == 1) {
+            Main.toBePublished.add(tag);
+        }
+    }
 
+    public void run() {
+        // Buffer run logic
+    }
 
     
 }
