@@ -11,6 +11,12 @@ static HashMap<String, Reservation_Station> Integer_Stations = new HashMap<>();
 static HashMap<String, Buffer> Load_Buffer = new HashMap<>();
 static HashMap<String, Buffer> Store_Buffer = new HashMap<>();
 
+int Acapacity = 3;
+int Mcapacity = 3;
+int Icapacity = 3;
+int Lcapacity = 3;
+int Scapacity = 3;
+
 
 
 public static void main(String[] args){

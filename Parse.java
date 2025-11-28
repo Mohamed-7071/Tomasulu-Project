@@ -84,16 +84,30 @@ public class Parse {
                 break;
         }
     }
-
+static boolean Instruction_Is_Stalled = false;
+static int integer_reservation_station_number=1;
+static int Add_reservation_station_number=1;
+static int Mul_reservation_station_number=1;
     private static void DADDI (String Source,String Operand1,String Operand2){
     int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
     int vk = Integer.parseInt(Operand2);
     String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
     String Qk = null;
-    Main.Integer_Stations.get("I1").issue("DADDI", vj, vk, Qj, Qk); 
-
+    for(int i=1;i<=Main.Icapacity;i++){
+         if(!Main.Integer_Stations.get("I"+i).IsBusy()){
+            Main.Integer_Stations.get("I" + i).issue("DADDI", vj, vk, Qj, Qk);
+            break; 
+         }
+         if(i==Main.Icapacity)
+            Instruction_Is_Stalled = true;
+        
 
     }
+    }
+
+
+
+    
 
     private static void ADD_D (String Source,String Operand1,String Operand2){
         int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
