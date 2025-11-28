@@ -11,13 +11,13 @@ static HashMap<String, Reservation_Station> Integer_Stations = new HashMap<>();
 static HashMap<String, Buffer> Load_Buffer = new HashMap<>();
 static HashMap<String, Buffer> Store_Buffer = new HashMap<>();
 
-int Acapacity = 3;
-int Mcapacity = 3;
-int Icapacity = 3;
-int Lcapacity = 3;
-int Scapacity = 3;
+static int Acapacity = 3;
+static int Mcapacity = 3;
+static int Icapacity = 3;
+static int Lcapacity = 3;
+static int Scapacity = 3;
 
-
+//i need these defined so i can use them in parse, atleast temporarily
 
 public static void main(String[] args){
 initialize();

@@ -12,6 +12,13 @@ public class Reservation_Station {
     public Reservation_Station(){
     }
 
+    public boolean IsBusy(){
+        if (Busy ==1)
+            return true;
+        else
+            return false;
+    }
+
     public void issue(String op, int vj, int vk, String Qj, String Qk){
         this.Busy = 1;
         this.op = op;
