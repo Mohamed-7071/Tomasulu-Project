@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.demo.TomasuloController" prefHeight="800.0" prefWidth="1200.0">
+    
+    <!-- Top: Configuration Panel -->
+    <top>
+        <VBox spacing="10" style="-fx-background-color: #f0f0f0; -fx-padding: 15;">
+            <Label text="Tomasulo Algorithm Simulator" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+            
+            <HBox spacing="20">
+                <!-- Latencies -->
+                <VBox spacing="5">
+                    <Label text="Latencies (cycles)" style="-fx-font-weight: bold;"/>
+                    <HBox spacing="5">
+                        <Label text="Add:"/>
+                        <TextField fx:id="addLatencyField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Mul:"/>
+                        <TextField fx:id="mulLatencyField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Int:"/>
+                        <TextField fx:id="intLatencyField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Load:"/>
+                        <TextField fx:id="loadLatencyField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Store:"/>
+                        <TextField fx:id="storeLatencyField" prefWidth="50"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Capacities -->
+                <VBox spacing="5">
+                    <Label text="Station Capacities" style="-fx-font-weight: bold;"/>
+                    <HBox spacing="5">
+                        <Label text="Add:"/>
+                        <TextField fx:id="addCapacityField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Mul:"/>
+                        <TextField fx:id="mulCapacityField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Int:"/>
+                        <TextField fx:id="intCapacityField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Load:"/>
+                        <TextField fx:id="loadCapacityField" prefWidth="50"/>
+                    </HBox>
+                    <HBox spacing="5">
+                        <Label text="Store:"/>
+                        <TextField fx:id="storeCapacityField" prefWidth="50"/>
+                    </HBox>
+                </VBox>
+                
+                <!-- Instructions -->
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label text="Instructions" style="-fx-font-weight: bold;"/>
+                    <TextArea fx:id="instructionInput" prefHeight="120" prefWidth="300"/>
+                </VBox>
+                
+                <!-- Controls -->
+                <VBox spacing="10" alignment="CENTER">
+                    <Label fx:id="cycleLabel" text="Cycle: 0" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                    <Button fx:id="startButton" text="Start" onAction="#onStartClick" prefWidth="100"/>
+                    <Button fx:id="stepButton" text="Step" onAction="#onStepClick" prefWidth="100"/>
+                    <Button fx:id="resetButton" text="Reset" onAction="#onResetClick" prefWidth="100"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </top>
+    
+    <!-- Center: Reservation Stations and Buffers -->
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true">
+            <VBox spacing="15" style="-fx-padding: 15;">
+                <!-- Add Stations -->
+                <VBox spacing="5">
+                    <Label text="Add Reservation Stations" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    <TableView fx:id="addStationsTable" prefHeight="150">
+                        <columns>
+                            <TableColumn text="Tag" prefWidth="60"/>
+                            <TableColumn text="Busy" prefWidth="60"/>
+                            <TableColumn text="Op" prefWidth="80"/>
+                            <TableColumn text="Vj" prefWidth="80"/>
+                            <TableColumn text="Vk" prefWidth="80"/>
+                            <TableColumn text="Qj" prefWidth="80"/>
+                            <TableColumn text="Qk" prefWidth="80"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+                
+                <!-- Multiply Stations -->
+                <VBox spacing="5">
+                    <Label text="Multiply Reservation Stations" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    <TableView fx:id="mulStationsTable" prefHeight="150">
+                        <columns>
+                            <TableColumn text="Tag" prefWidth="60"/>
+                            <TableColumn text="Busy" prefWidth="60"/>
+                            <TableColumn text="Op" prefWidth="80"/>
+                            <TableColumn text="Vj" prefWidth="80"/>
+                            <TableColumn text="Vk" prefWidth="80"/>
+                            <TableColumn text="Qj" prefWidth="80"/>
+                            <TableColumn text="Qk" prefWidth="80"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+                
+                <!-- Integer Stations -->
+                <VBox spacing="5">
+                    <Label text="Integer Reservation Stations" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    <TableView fx:id="intStationsTable" prefHeight="150">
+                        <columns>
+                            <TableColumn text="Tag" prefWidth="60"/>
+                            <TableColumn text="Busy" prefWidth="60"/>
+                            <TableColumn text="Op" prefWidth="80"/>
+                            <TableColumn text="Vj" prefWidth="80"/>
+                            <TableColumn text="Vk" prefWidth="80"/>
+                            <TableColumn text="Qj" prefWidth="80"/>
+                            <TableColumn text="Qk" prefWidth="80"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+                
+                <HBox spacing="15">
+                    <!-- Load Buffer -->
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="Load Buffer" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                        <TableView fx:id="loadBufferTable" prefHeight="150">
+                            <columns>
+                                <TableColumn text="Tag" prefWidth="60"/>
+                                <TableColumn text="Busy" prefWidth="60"/>
+                                <TableColumn text="Address" prefWidth="80"/>
+                                <TableColumn text="V" prefWidth="80"/>
+                                <TableColumn text="Q" prefWidth="80"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                    
+                    <!-- Store Buffer -->
+                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                        <Label text="Store Buffer" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                        <TableView fx:id="storeBufferTable" prefHeight="150">
+                            <columns>
+                                <TableColumn text="Tag" prefWidth="60"/>
+                                <TableColumn text="Busy" prefWidth="60"/>
+                                <TableColumn text="Address" prefWidth="80"/>
+                                <TableColumn text="V" prefWidth="80"/>
+                                <TableColumn text="Q" prefWidth="80"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </HBox>
+                
+                <!-- Registers -->
+                <VBox spacing="5">
+                    <Label text="Register File" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+                    <TableView fx:id="registerTable" prefHeight="200">
+                        <columns>
+                            <TableColumn text="Register" prefWidth="100"/>
+                            <TableColumn text="Value" prefWidth="100"/>
+                            <TableColumn text="Qi" prefWidth="100"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+    
+</BorderPane>
