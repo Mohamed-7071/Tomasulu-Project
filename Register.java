@@ -1,5 +1,5 @@
 
-public class Register extends RegBufStat {
+public class Register {
 
     int value;
     String Qi;

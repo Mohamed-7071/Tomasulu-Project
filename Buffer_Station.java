@@ -1,4 +1,4 @@
-public abstract class Buffer_Station extends RegBufStat {
+public abstract class Buffer_Station {
     public int Busy;
     public int output;
 

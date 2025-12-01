@@ -135,6 +135,7 @@ public class Parse {
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
                 Main.Add_Stations.get("A" + i).issue("SUB_D", vj, vk, Qj, Qk);
                 return true; 
+                
              }
         }
         return false;
