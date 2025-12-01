@@ -18,6 +18,7 @@ public class Reservation_Station extends Buffer_Station {
         this.Qj = Qj;
         this.Qk = Qk;
         this.Executing_Time = Main.getExecutionTime(op);
+        resetPublishState();
     }
 
     public static void InitializeReservationStation(int capacity, HashMap<String, Reservation_Station> RS, String prefix){
@@ -28,12 +29,9 @@ public class Reservation_Station extends Buffer_Station {
 
     @Override
     public void publish(String tag){
-        if(Busy==1 && Executing_Time==0){
-            Main.pair p = new Main().new pair(this, tag);
-            if(!Main.toBePublished.contains(p)){
-                Main.toBePublished.add(p);
-            }
-            Main.toBePublished.remove();
+        if(Busy==1 && Executing_Time==0 && !isQueuedForPublish()){
+            Main.toBePublished.add(new Main.pair(this, tag));
+            markQueuedForPublish();
         }
     }
 
@@ -56,34 +54,51 @@ public class Reservation_Station extends Buffer_Station {
         this.vk = 0;
         this.Qj = null;
         this.Qk = null;
-        this.Executing_Time = 0;
+        this.Executing_Time = -1;
+        resetPublishState();
     }
 
     @Override
     public void run(){
-        if(this.Qj!=null || this.Qk != null)          
+        if(this.Busy != 1 || this.op == null) {
             return;
-        if (this.Executing_Time>0)
-            this.Executing_Time--;
-       switch(this.op) {
-        case "DADDI":
-        case "ADD_D":
-        case "ADD_S":
-            this.output = this.vj+this.vk;
-        case "DSUBI":
-        case "SUB_D":
-        case "SUB_S":
-           this.output = this.vj-this.vk;
-        case "MUL_D":
-        case "MUL_S":
-            this.output = this.vj*this.vk;
-        case "DIV_D":
-        case "DIV_S":
-            this.output = this.vj/this.vk;
-                }
+        }
 
-        
-        
+        if(this.Qj != null || this.Qk != null) {
+            return;
+        }
+
+        if (this.Executing_Time > 0) {
+            this.Executing_Time--;
+            if (this.Executing_Time > 0) {
+                return;
+            }
+        }
+
+        if (this.Executing_Time == 0) {
+            switch(this.op) {
+                case "DADDI":
+                case "ADD_D":
+                case "ADD_S":
+                    this.output = this.vj + this.vk;
+                    break;
+                case "DSUBI":
+                case "SUB_D":
+                case "SUB_S":
+                    this.output = this.vj - this.vk;
+                    break;
+                case "MUL_D":
+                case "MUL_S":
+                    this.output = this.vj * this.vk;
+                    break;
+                case "DIV_D":
+                case "DIV_S":
+                    this.output = (this.vk != 0) ? this.vj / this.vk : 0;
+                    break;
+                default:
+                    this.output = 0;
+            }
+        }
     }
 
     

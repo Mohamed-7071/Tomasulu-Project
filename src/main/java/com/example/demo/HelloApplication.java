@@ -5,8 +5,8 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.collections.FXCollections;
@@ -15,12 +15,12 @@ import javafx.beans.property.SimpleStringProperty;
 
 public class HelloApplication extends Application {
 
-    private VBox centerContainer;
     private Label cycleLabel;
     private boolean isRunning = false;
     private Thread simulationThread;
     
     // Tables for displaying data
+    private TableView<InstructionRow> instructionQueueTable;
     private TableView<StationRow> addStationsTable;
     private TableView<StationRow> mulStationsTable;
     private TableView<StationRow> intStationsTable;
@@ -53,60 +53,42 @@ public class HelloApplication extends Application {
         TabPane tabPane = new TabPane();
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        // Prevent TabPane from growing and breaking UI
-        tabPane.setPrefHeight(40);
-        tabPane.setMinHeight(40);
-        tabPane.setMaxHeight(40);
-
         Tab instructionQueueTab = new Tab("Instruction Queue");
+        instructionQueueTab.setContent(buildInstructionQueueView());
+
         Tab reservationStationsTab = new Tab("Reservation Stations");
+        reservationStationsTab.setContent(buildReservationStationsView());
+
         Tab loadStoreTab = new Tab("Load/Store Buffers");
+        loadStoreTab.setContent(buildLoadStoreView());
+
         Tab registerFileTab = new Tab("Register File");
+        registerFileTab.setContent(buildRegisterFileView());
+
         Tab cacheTab = new Tab("Cache");
+        cacheTab.setContent(buildCacheView());
 
         tabPane.getTabs().addAll(
-                instructionQueueTab,
-                reservationStationsTab,
-                loadStoreTab,
-                registerFileTab,
-                cacheTab
+            instructionQueueTab,
+            reservationStationsTab,
+            loadStoreTab,
+            registerFileTab,
+            cacheTab
         );
 
-        // ========== CENTER CONTAINER (CHANGES PER TAB) ==========
-        centerContainer = new VBox();
-        centerContainer.setPadding(new Insets(10));
-        centerContainer.setSpacing(15);
-        VBox.setVgrow(centerContainer, Priority.ALWAYS);
-
-        showInstructionQueue();
-
-        // ========== TAB SWITCHING ==========
-        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            switch (newTab.getText()) {
-                case "Instruction Queue" -> showInstructionQueue();
-                case "Reservation Stations" -> showReservationStations();
-                case "Load/Store Buffers" -> showLoadStoreBuffers();
-                case "Register File" -> showRegisterFile();
-                case "Cache" -> showCache();
-            }
-        });
-
         // ========== BOTTOM LOG ==========
-        TextArea logArea = new TextArea();
+        logArea = new TextArea();
         logArea.setEditable(false);
         logArea.setPrefHeight(130);
         logArea.appendText("""
-                Execution Log:
+            Execution Log:
                 
-                """);
+            """);
 
         // ========== MAIN LAYOUT ==========
-        VBox centerArea = new VBox(tabPane, centerContainer);
-        VBox.setVgrow(centerContainer, Priority.ALWAYS);
-
         BorderPane root = new BorderPane();
         root.setTop(topBar);
-        root.setCenter(centerArea);
+        root.setCenter(tabPane);
         root.setBottom(logArea);
 
         Scene scene = new Scene(root, 1100, 700);
@@ -119,40 +101,52 @@ public class HelloApplication extends Application {
     // =============== TAB CONTENT FUNCTIONS ======================
     // ============================================================
 
-    private void showInstructionQueue() {
-        centerContainer.getChildren().clear();
+    private Node buildInstructionQueueView() {
+        instructionQueueTable = new TableView<>();
+        instructionQueueTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        VBox.setVgrow(instructionQueueTable, Priority.ALWAYS);
 
-        TableView<Object> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        VBox.setVgrow(table, Priority.ALWAYS);
+        TableColumn<InstructionRow, String> instrCol = new TableColumn<>("Instruction");
+        instrCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getInstruction()));
+        instrCol.setPrefWidth(200);
+        
+        TableColumn<InstructionRow, String> issueCol = new TableColumn<>("Issue");
+        issueCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIssue()));
+        
+        TableColumn<InstructionRow, String> execStartCol = new TableColumn<>("Exec Start");
+        execStartCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getExecStart()));
+        
+        TableColumn<InstructionRow, String> execEndCol = new TableColumn<>("Exec End");
+        execEndCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getExecEnd()));
+        
+        TableColumn<InstructionRow, String> writeCol = new TableColumn<>("Write");
+        writeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getWrite()));
 
-        table.getColumns().addAll(
-                new TableColumn<>("Instruction"),
-                new TableColumn<>("Issue"),
-                new TableColumn<>("Exec Start"),
-                new TableColumn<>("Exec End"),
-                new TableColumn<>("Write")
-        );
+        instructionQueueTable.getColumns().addAll(instrCol, issueCol, execStartCol, execEndCol, writeCol);
 
-        centerContainer.getChildren().add(table);
+        VBox wrapper = new VBox(10, instructionQueueTable);
+        wrapper.setPadding(new Insets(10));
+        VBox.setVgrow(wrapper, Priority.ALWAYS);
+        updateInstructionQueue();
+        return wrapper;
     }
 
-    private void showReservationStations() {
-        centerContainer.getChildren().clear();
-
-        centerContainer.getChildren().add(new Label("Add/Sub Stations:"));
+    private Node buildReservationStationsView() {
         addStationsTable = createRS_Table();
-        centerContainer.getChildren().add(addStationsTable);
-
-        centerContainer.getChildren().add(new Label("Multiply Stations:"));
         mulStationsTable = createRS_Table();
-        centerContainer.getChildren().add(mulStationsTable);
-
-        centerContainer.getChildren().add(new Label("Integer Stations:"));
         intStationsTable = createRS_Table();
-        centerContainer.getChildren().add(intStationsTable);
-        
+
+        VBox container = new VBox(10,
+            new Label("Add/Sub Stations:"),
+            addStationsTable,
+            new Label("Multiply Stations:"),
+            mulStationsTable,
+            new Label("Integer Stations:"),
+            intStationsTable
+        );
+        container.setPadding(new Insets(10));
         updateAllTables();
+        return container;
     }
 
     private TableView<StationRow> createRS_Table() {
@@ -179,24 +173,27 @@ public class HelloApplication extends Application {
         
         TableColumn<StationRow, String> qkCol = new TableColumn<>("Qk");
         qkCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getQk()));
+        
+        TableColumn<StationRow, String> timeCol = new TableColumn<>("Time");
+        timeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTime()));
 
-        table.getColumns().addAll(nameCol, busyCol, opCol, vjCol, vkCol, qjCol, qkCol);
+        table.getColumns().addAll(nameCol, busyCol, opCol, vjCol, vkCol, qjCol, qkCol, timeCol);
 
         return table;
     }
 
-    private void showLoadStoreBuffers() {
-        centerContainer.getChildren().clear();
-
-        centerContainer.getChildren().add(new Label("Load Buffers:"));
+    private Node buildLoadStoreView() {
         loadBuffersTable = createLS_Table();
-        centerContainer.getChildren().add(loadBuffersTable);
-
-        centerContainer.getChildren().add(new Label("Store Buffers:"));
         storeBuffersTable = createLS_Table();
-        centerContainer.getChildren().add(storeBuffersTable);
-        
+        VBox container = new VBox(10,
+            new Label("Load Buffers:"),
+            loadBuffersTable,
+            new Label("Store Buffers:"),
+            storeBuffersTable
+        );
+        container.setPadding(new Insets(10));
         updateAllTables();
+        return container;
     }
 
     private TableView<BufferRow> createLS_Table() {
@@ -223,9 +220,7 @@ public class HelloApplication extends Application {
         return table;
     }
 
-    private void showRegisterFile() {
-        centerContainer.getChildren().clear();
-
+    private Node buildRegisterFileView() {
         registerTable = new TableView<>();
         VBox.setVgrow(registerTable, Priority.ALWAYS);
 
@@ -240,18 +235,16 @@ public class HelloApplication extends Application {
 
         registerTable.getColumns().addAll(regCol, valueCol, qiCol);
 
-        centerContainer.getChildren().add(registerTable);
-        
+        VBox container = new VBox(10, registerTable);
+        container.setPadding(new Insets(10));
         updateAllTables();
+        return container;
     }
 
-    private void showCache() {
-        centerContainer.getChildren().clear();
-
+    private Node buildCacheView() {
         Label msg = new Label("Cache Configuration will be displayed after simulation starts");
         msg.setPadding(new Insets(20));
-
-        centerContainer.getChildren().add(msg);
+        return new StackPane(msg);
     }
 
     // ============================================================
@@ -260,8 +253,9 @@ public class HelloApplication extends Application {
     
     private void loadProgram() {
         try {
-            // Load instructions from file using MipsInstructionReader
-            Main.instructions = MipsInstructionReader.getInstructions();
+            // Load instructions from file using MipsInstructionReader with file dialog
+            Stage currentStage = (Stage) cycleLabel.getScene().getWindow();
+            Main.instructions = MipsInstructionReader.getInstructions(currentStage);
             
             if (logArea != null) {
                 logArea.appendText("Program loaded with " + Main.instructions.length + " instructions from file\n");
@@ -431,6 +425,7 @@ public class HelloApplication extends Application {
     private void updateAllTables() {
         // Update all tables based on current tab selection
         Platform.runLater(() -> {
+            if (instructionQueueTable != null) updateInstructionQueue();
             if (addStationsTable != null) updateReservationStationTable(addStationsTable, Main.Add_Stations);
             if (mulStationsTable != null) updateReservationStationTable(mulStationsTable, Main.Mul_Stations);
             if (intStationsTable != null) updateReservationStationTable(intStationsTable, Main.Integer_Stations);
@@ -451,7 +446,8 @@ public class HelloApplication extends Application {
                 String.valueOf(station.vj),
                 String.valueOf(station.vk),
                 station.Qj != null ? station.Qj : "-",
-                station.Qk != null ? station.Qk : "-"
+                station.Qk != null ? station.Qk : "-",
+                station.Executing_Time >= 0 ? String.valueOf(station.Executing_Time) : "-"
             ));
         }
         table.setItems(data);
@@ -471,7 +467,6 @@ public class HelloApplication extends Application {
         }
         table.setItems(data);
     }
-    
     private void updateRegisterTable() {
         ObservableList<RegisterRow> data = FXCollections.observableArrayList();
         for (String key : Main.registerMap.keySet()) {
@@ -485,6 +480,24 @@ public class HelloApplication extends Application {
         }
         registerTable.setItems(data);
     }
+    
+    private void updateInstructionQueue() {
+        if (instructionQueueTable == null) return;
+        
+        ObservableList<InstructionRow> data = FXCollections.observableArrayList();
+        if (Main.instructions != null) {
+            for (int i = 0; i < Main.instructions.length; i++) {
+                String instruction = Main.instructions[i];
+                String issue = i < Main.curInstruction ? String.valueOf(i + 1) : "-";
+                String execStart = "-";
+                String execEnd = "-";
+                String write = "-";
+                
+                data.add(new InstructionRow(instruction, issue, execStart, execEnd, write));
+            }
+        }
+        instructionQueueTable.setItems(data);
+    }
 
     public static void main(String[] args) {
         launch();
@@ -493,7 +506,6 @@ public class HelloApplication extends Application {
     // ============================================================
     // =============== DATA MODEL CLASSES =========================
     // ============================================================
-    
     public static class StationRow {
         private final SimpleStringProperty name;
         private final SimpleStringProperty busy;
@@ -502,8 +514,9 @@ public class HelloApplication extends Application {
         private final SimpleStringProperty vk;
         private final SimpleStringProperty qj;
         private final SimpleStringProperty qk;
+        private final SimpleStringProperty time;
         
-        public StationRow(String name, String busy, String op, String vj, String vk, String qj, String qk) {
+        public StationRow(String name, String busy, String op, String vj, String vk, String qj, String qk, String time) {
             this.name = new SimpleStringProperty(name);
             this.busy = new SimpleStringProperty(busy);
             this.op = new SimpleStringProperty(op);
@@ -511,6 +524,7 @@ public class HelloApplication extends Application {
             this.vk = new SimpleStringProperty(vk);
             this.qj = new SimpleStringProperty(qj);
             this.qk = new SimpleStringProperty(qk);
+            this.time = new SimpleStringProperty(time);
         }
         
         public String getName() { return name.get(); }
@@ -520,6 +534,7 @@ public class HelloApplication extends Application {
         public String getVk() { return vk.get(); }
         public String getQj() { return qj.get(); }
         public String getQk() { return qk.get(); }
+        public String getTime() { return time.get(); }
     }
     
     public static class BufferRow {
@@ -558,5 +573,27 @@ public class HelloApplication extends Application {
         public String getRegister() { return register.get(); }
         public String getValue() { return value.get(); }
         public String getQi() { return qi.get(); }
+    }
+    
+    public static class InstructionRow {
+        private final SimpleStringProperty instruction;
+        private final SimpleStringProperty issue;
+        private final SimpleStringProperty execStart;
+        private final SimpleStringProperty execEnd;
+        private final SimpleStringProperty write;
+        
+        public InstructionRow(String instruction, String issue, String execStart, String execEnd, String write) {
+            this.instruction = new SimpleStringProperty(instruction);
+            this.issue = new SimpleStringProperty(issue);
+            this.execStart = new SimpleStringProperty(execStart);
+            this.execEnd = new SimpleStringProperty(execEnd);
+            this.write = new SimpleStringProperty(write);
+        }
+        
+        public String getInstruction() { return instruction.get(); }
+        public String getIssue() { return issue.get(); }
+        public String getExecStart() { return execStart.get(); }
+        public String getExecEnd() { return execEnd.get(); }
+        public String getWrite() { return write.get(); }
     }
 }
