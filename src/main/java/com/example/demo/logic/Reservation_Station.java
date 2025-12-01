@@ -8,8 +8,7 @@ public class Reservation_Station extends Buffer_Station {
     public int vk;
     public String Qj;
     public String Qk;
-
-    public int Executing_Time = -1;
+    public Integer Executing_Time = -1;
     public void issue(String op, int vj, int vk, String Qj, String Qk){
         this.Busy = 1;
         this.op = op;
@@ -17,7 +16,7 @@ public class Reservation_Station extends Buffer_Station {
         this.vk = vk;
         this.Qj = Qj;
         this.Qk = Qk;
-        this.Executing_Time = Main.getExecutionTime(op);
+        this.Executing_Time = Main.getExecutionTime(op)+1;
         resetPublishState();
     }
 

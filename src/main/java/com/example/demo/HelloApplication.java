@@ -1,17 +1,38 @@
 package com.example.demo;
 
-import com.example.demo.logic.*;
+import com.example.demo.logic.Buffer;
+import com.example.demo.logic.Main;
+import com.example.demo.logic.MipsInstructionReader;
+import com.example.demo.logic.Register;
+import com.example.demo.logic.Reservation_Station;
+
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.scene.Scene;
-import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.stage.Stage;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class HelloApplication extends Application {
 
@@ -447,7 +468,7 @@ public class HelloApplication extends Application {
                 String.valueOf(station.vk),
                 station.Qj != null ? station.Qj : "-",
                 station.Qk != null ? station.Qk : "-",
-                station.Executing_Time >= 0 ? String.valueOf(station.Executing_Time) : "-"
+                station.Executing_Time >= 0 ? (station.Qj != null || station.Qk != null ? "" : String.valueOf(station.Executing_Time)) : " "
             ));
         }
         table.setItems(data);
