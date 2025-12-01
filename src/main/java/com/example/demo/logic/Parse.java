@@ -94,6 +94,7 @@ public class Parse {
         for(int i=1;i<=Main.Icapacity;i++){
              if(!Main.Integer_Stations.get("I"+i).IsBusy()){
                 Main.Integer_Stations.get("I" + i).issue("DSUBI", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("I"+i);
                 return true; 
              }
         }
@@ -108,6 +109,7 @@ public class Parse {
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
                 Main.Add_Stations.get("A" + i).issue("ADD_D", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("A"+i);
                 return true; 
              }
         }
@@ -122,6 +124,7 @@ public class Parse {
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
                 Main.Add_Stations.get("A" + i).issue("ADD_S", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("A"+i);
                 return true; 
              }
         }
@@ -136,6 +139,7 @@ public class Parse {
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
                 Main.Add_Stations.get("A" + i).issue("SUB_D", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("A"+i);
                 return true; 
              }
         }
@@ -150,6 +154,7 @@ public class Parse {
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
                 Main.Add_Stations.get("A" + i).issue("SUB_S", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("A"+i);
                 return true; 
              }
         }
@@ -164,6 +169,7 @@ public class Parse {
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
                 Main.Mul_Stations.get("M" + i).issue("MUL_D", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("M"+i);
                 return true; 
              }
         }
@@ -178,6 +184,7 @@ public class Parse {
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
                 Main.Mul_Stations.get("M" + i).issue("MUL_S", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("M"+i);
                 return true; 
              }
         }
@@ -192,6 +199,7 @@ public class Parse {
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
                 Main.Mul_Stations.get("M" + i).issue("DIV_D", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("M"+i);
                 return true; 
              }
         }
@@ -206,6 +214,7 @@ public class Parse {
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
                 Main.Mul_Stations.get("M" + i).issue("DIV_S", vj, vk, Qj, Qk);
+                     Main.registerMap.get(Source).setQi("M"+i);
                 return true; 
              }
         }

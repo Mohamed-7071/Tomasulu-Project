@@ -67,11 +67,6 @@ public class Main {
             return;
         }
 
-        if (curInstruction >= instructions.length && toBePublished.isEmpty()) {
-            running = false;
-            return;
-        }
-
         cycle++;
 
         if (curInstruction < instructions.length) {
@@ -83,9 +78,6 @@ public class Main {
         publish();
         run();
 
-        if (curInstruction >= instructions.length && toBePublished.isEmpty()) {
-            running = false;
-        }
     }
 
     public static void initialize(){
