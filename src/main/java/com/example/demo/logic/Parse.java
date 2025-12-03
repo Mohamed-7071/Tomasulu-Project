@@ -3,6 +3,12 @@ package com.example.demo.logic;
 public class Parse {
     public static boolean  parse(String instruction){
         String[] token = instruction.split(" ");
+        if(token[0].endsWith(":")){
+          token[0]=token[1];
+          token[1]=token[2];
+          token[2]=token[3];
+          token[3]=token[4];
+        }
         switch (token[0]) {
             case "DADDI":
             return DADDI(token[1], token[2], token[3]);
@@ -34,7 +40,7 @@ public class Parse {
             case "DIV.S":
             return DIV_S(token[1], token[2], token[3]);
             //DIV.S F1, F2, F3
-            case "LW":
+            // case "LW":
             // return LW(token[1], token[2], token[3]);
             // //LW R1, 0(R2)
             // case "LD":
@@ -58,12 +64,12 @@ public class Parse {
             // case "S.D":
             // return S_D(token[1], token[2], token[3]);
             // //S.D F1, 0(R2)
-            // case "BNE":
-            // return BNE(token[1], token[2], token[3]);
-            // //BNE R1, R2, label
-            // case "BEQ":
-            // return BEQ(token[1], token[2], token[3]);
-            // //BEQ R1, R2, label
+            case "BNE":
+            return BNE(token[1], token[2], token[3]);
+            //BNE R1, R2, label
+            case "BEQ":
+            return BEQ(token[1], token[2], token[3]);
+            //BEQ R1, R2, label
             default:
             return false;
         }
@@ -72,14 +78,17 @@ public class Parse {
 // static int Add_reservation_station_number=1;
 // static int Mul_reservation_station_number=1;
     private static boolean DADDI (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = Integer.parseInt(Operand2);
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = Float.parseFloat(Operand2);
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
         String Qk = null;
         for(int i=1;i<=Main.Icapacity;i++){
              if(!Main.Integer_Stations.get("I"+i).IsBusy()){
-                Main.Integer_Stations.get("I" + i).issue("DADDI", vj, vk, Qj, Qk);
-                Main.registerMap.get(Source).setQi("I"+i);
+                String tag = "I" + i;
+                Main.Integer_Stations.get(tag).issue("DADDI", vj, vk, Qj, Qk);
+                Main.Integer_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -87,14 +96,17 @@ public class Parse {
     }
 
     private static boolean DSUBI (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = Integer.parseInt(Operand2);
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = Float.parseFloat(Operand2);
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
         String Qk = null;
         for(int i=1;i<=Main.Icapacity;i++){
              if(!Main.Integer_Stations.get("I"+i).IsBusy()){
-                Main.Integer_Stations.get("I" + i).issue("DSUBI", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("I"+i);
+                String tag = "I" + i;
+                Main.Integer_Stations.get(tag).issue("DSUBI", vj, vk, Qj, Qk);
+                Main.Integer_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -102,14 +114,17 @@ public class Parse {
     }
 
     private static boolean ADD_D (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
-                Main.Add_Stations.get("A" + i).issue("ADD_D", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("A"+i);
+                String tag = "A" + i;
+                Main.Add_Stations.get(tag).issue("ADD_D", vj, vk, Qj, Qk);
+                Main.Add_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -117,14 +132,17 @@ public class Parse {
     }
 
     private static boolean ADD_S (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
-                Main.Add_Stations.get("A" + i).issue("ADD_S", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("A"+i);
+                String tag = "A" + i;
+                Main.Add_Stations.get(tag).issue("ADD_S", vj, vk, Qj, Qk);
+                Main.Add_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -132,14 +150,17 @@ public class Parse {
     }
 
     private static boolean SUB_D (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
-                Main.Add_Stations.get("A" + i).issue("SUB_D", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("A"+i);
+                String tag = "A" + i;
+                Main.Add_Stations.get(tag).issue("SUB_D", vj, vk, Qj, Qk);
+                Main.Add_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -147,14 +168,17 @@ public class Parse {
     }
 
     private static boolean SUB_S (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Acapacity;i++){
              if(!Main.Add_Stations.get("A"+i).IsBusy()){
-                Main.Add_Stations.get("A" + i).issue("SUB_S", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("A"+i);
+                String tag = "A" + i;
+                Main.Add_Stations.get(tag).issue("SUB_S", vj, vk, Qj, Qk);
+                Main.Add_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -162,14 +186,17 @@ public class Parse {
     }
 
     private static boolean MUL_D (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
-                Main.Mul_Stations.get("M" + i).issue("MUL_D", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("M"+i);
+                String tag = "M" + i;
+                Main.Mul_Stations.get(tag).issue("MUL_D", vj, vk, Qj, Qk);
+                Main.Mul_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -177,14 +204,17 @@ public class Parse {
     }
 
     private static boolean MUL_S (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
-                Main.Mul_Stations.get("M" + i).issue("MUL_S", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("M"+i);
+                String tag = "M" + i;
+                Main.Mul_Stations.get(tag).issue("MUL_S", vj, vk, Qj, Qk);
+                Main.Mul_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -192,14 +222,17 @@ public class Parse {
     }
 
     private static boolean DIV_D (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
-                Main.Mul_Stations.get("M" + i).issue("DIV_D", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("M"+i);
+                String tag = "M" + i;
+                Main.Mul_Stations.get(tag).issue("DIV_D", vj, vk, Qj, Qk);
+                Main.Mul_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -207,14 +240,17 @@ public class Parse {
     }
 
     private static boolean DIV_S (String Source,String Operand1,String Operand2){
-        int vj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand1).getValue() : 0;
-        int vk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ? (Integer)Main.registerMap.get(Operand2).getValue() : 0;
-        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand1).getValue();
-        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Integer) ?  null : (String)Main.registerMap.get(Operand2).getValue();
+        float vj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float vk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Qj = (Main.registerMap.get(Operand1).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand1).getValue();
+        String Qk = (Main.registerMap.get(Operand2).getValue() instanceof Float) ?  null : (String)Main.registerMap.get(Operand2).getValue();
         for(int i=1;i<=Main.Mcapacity;i++){
              if(!Main.Mul_Stations.get("M"+i).IsBusy()){
-                Main.Mul_Stations.get("M" + i).issue("DIV_S", vj, vk, Qj, Qk);
-                     Main.registerMap.get(Source).setQi("M"+i);
+                String tag = "M" + i;
+                Main.Mul_Stations.get(tag).issue("DIV_S", vj, vk, Qj, Qk);
+                Main.Mul_Stations.get(tag).stationTag = tag;
+                Main.registerMap.get(Source).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
                 return true; 
              }
         }
@@ -223,10 +259,9 @@ public class Parse {
 
 
 
-    
-    private static void LW (String Source,String Operand1,String Operand2){
-       
-    }
+    // Load/Store instructions - commented out for now
+    // private static void LW (String Source,String Operand1,String Operand2){
+    // }
 
     // private static void LD (String Source,String Operand1,String Operand2){
     //     // LD R1, 0(R2) - offset(base)
@@ -316,15 +351,55 @@ public class Parse {
     //     Main.Store_Buffer.get("S1").issue(address, v, q);
     // }
 
-    // private static void BNE (String Operand1,String Operand2,String label){
-    //     // BNE R1, R2, label - Branch if not equal
-    //     // This would need additional logic for branch handling
-    //     // Placeholder implementation
-    // }
+    // BNE R1, R2, label - Branch if not equal
+    private static boolean BNE(String Operand1, String Operand2, String label) {
+        float v1 = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float v2 = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Q1 = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? null : (String)Main.registerMap.get(Operand1).getValue();
+        String Q2 = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? null : (String)Main.registerMap.get(Operand2).getValue();
+        
+        // If either operand is waiting on a result, we can't branch yet
+        if (Q1 != null || Q2 != null) {
+            return false;
+        }
+        
+        // Branch if not equal
+        if (v1 != v2) {
+            // Find the label in the instruction array and set curInstruction
+            for (int i = 0; i < Main.instructions.length; i++) {
+                if (Main.instructions[i].trim().startsWith(label + ":")) {
+                    // Set to i-1 because Main.executeCycle will increment curInstruction after parse returns true
+                    Main.curInstruction = i - 1;
+                    return true;
+                }
+            }
+        }
+        return true; // Continue to next instruction if equal
+    }
 
-    // private static void BEQ (String Operand1,String Operand2,String label){
-    //     // BEQ R1, R2, label - Branch if equal
-    //     // This would need additional logic for branch handling
-    //     // Placeholder implementation
-    // }
+    // BEQ R1, R2, label - Branch if equal
+    private static boolean BEQ(String Operand1, String Operand2, String label) {
+        float v1 = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand1).getValue() : 0;
+        float v2 = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? (Float)Main.registerMap.get(Operand2).getValue() : 0;
+        String Q1 = (Main.registerMap.get(Operand1).getValue() instanceof Float) ? null : (String)Main.registerMap.get(Operand1).getValue();
+        String Q2 = (Main.registerMap.get(Operand2).getValue() instanceof Float) ? null : (String)Main.registerMap.get(Operand2).getValue();
+        
+        // If either operand is waiting on a result, we can't branch yet
+        if (Q1 != null || Q2 != null) {
+            return false;
+        }
+        
+        // Branch if equal
+        if (v1 == v2) {
+            // Find the label in the instruction array and set curInstruction
+            for (int i = 0; i < Main.instructions.length; i++) {
+                if (Main.instructions[i].trim().startsWith(label + ":")) {
+                    // Set to i-1 because Main.executeCycle will increment curInstruction after parse returns true
+                    Main.curInstruction = i - 1;
+                    return true;
+                }
+            }
+        }
+        return true; // Continue to next instruction if not equal
+    }
 }

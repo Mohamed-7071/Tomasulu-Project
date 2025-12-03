@@ -474,7 +474,7 @@ public class HelloApplication extends Application {
             Object value = reg.getValue();
             data.add(new RegisterRow(
                 key,
-                value instanceof Integer ? String.valueOf((Integer)value) : "-",
+                value instanceof Float ? String.valueOf((Float)value) : "-",
                 value instanceof String ? (String)value : "-"
             ));
         }
@@ -485,17 +485,18 @@ public class HelloApplication extends Application {
         if (instructionQueueTable == null) return;
         
         ObservableList<InstructionRow> data = FXCollections.observableArrayList();
-        if (Main.instructions != null) {
-            for (int i = 0; i < Main.instructions.length; i++) {
-                String instruction = Main.instructions[i];
-                String issue = i < Main.curInstruction ? String.valueOf(i + 1) : "-";
-                String execStart = "-";
-                String execEnd = "-";
-                String write = "-";
-                
-                data.add(new InstructionRow(instruction, issue, execStart, execEnd, write));
-            }
+        
+        // Display all issued instructions with their timing
+        for (Main.InstructionStatus status : Main.issuedInstructions) {
+            String instruction = status.instruction;
+            String issue = status.issueCycle >= 0 ? String.valueOf(status.issueCycle) : "-";
+            String execStart = status.execStartCycle >= 0 ? String.valueOf(status.execStartCycle) : "-";
+            String execEnd = status.execEndCycle >= 0 ? String.valueOf(status.execEndCycle) : "-";
+            String write = status.writeCycle >= 0 ? String.valueOf(status.writeCycle) : "-";
+            
+            data.add(new InstructionRow(instruction, issue, execStart, execEnd, write));
         }
+        
         instructionQueueTable.setItems(data);
     }
 

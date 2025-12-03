@@ -4,12 +4,12 @@ import java.util.HashMap;
 
 public class Buffer extends Buffer_Station {
     public int Address;
-    public int V;
+    public float V;
     public String Q;
     public int Executing_Time = -1;
     
 
-    public void issue(int address, int v, String q){
+    public void issue(int address, float v, String q){
         this.Busy = 1;
         this.V = v;
         this.Q = q;
@@ -24,7 +24,7 @@ public class Buffer extends Buffer_Station {
     }
 
 
-    public void fillFromCDB(String tag, int value){
+    public void fillFromCDB(String tag, float value){
         if(this.Q == null) return;
         if(this.Q.equals(tag)){
             this.V = value;

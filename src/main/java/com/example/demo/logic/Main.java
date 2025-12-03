@@ -2,8 +2,31 @@ package com.example.demo.logic;
 
 import java.util.HashMap;
 import java.util.PriorityQueue;
+import java.util.ArrayList;
 import java.util.Comparator;
+
 public class Main {
+    // Instruction status tracking
+    public static class InstructionStatus {
+        public String instruction;
+        public int instructionIndex;  // Original index in the instruction array
+        public String tag;            // Station/buffer tag (e.g., "A1", "M2")
+        public int issueCycle = -1;
+        public int execStartCycle = -1;
+        public int execEndCycle = -1;
+        public int writeCycle = -1;
+        
+        public InstructionStatus(String instruction, int index, String tag, int issueCycle) {
+            this.instruction = instruction;
+            this.instructionIndex = index;
+            this.tag = tag;
+            this.issueCycle = issueCycle;
+        }
+    }
+    
+    // List to track all issued instructions and their status
+    public static ArrayList<InstructionStatus> issuedInstructions = new ArrayList<>();
+    
     public static class pair {
         private final Buffer_Station value;
         private final String tag;
@@ -54,6 +77,9 @@ public class Main {
     public static int Lcapacity = 3;
     public static int Scapacity = 3;
 
+    // Store the station to be cleared after parse completes
+    private static Buffer_Station stationToClear = null;
+
     public static void main(String[] args){
         initialize();
         while(running){
@@ -63,6 +89,8 @@ public class Main {
 
     // Execute one cycle of the Tomasulo algorithm
     public static void executeCycle() {
+        publish();
+        run();
         if (!running || instructions == null) {
             return;
         }
@@ -74,9 +102,12 @@ public class Main {
                 curInstruction++;
             }
         }
-
-        publish();
-        run();
+        
+        // Clear the station after parse is done
+        if (stationToClear != null) {
+            stationToClear.clear();
+            stationToClear = null;
+        }
 
     }
 
@@ -89,6 +120,8 @@ public class Main {
         Load_Buffer.clear();
         Store_Buffer.clear();
         toBePublished.clear();
+        issuedInstructions.clear();
+        stationToClear = null;
         
         // Reset counters
         cycle = 0;
@@ -128,7 +161,7 @@ public class Main {
             pair CDB = toBePublished.remove();
             String tag = CDB.getTag();
             Buffer_Station Bstation = CDB.getValue();
-            int output = Bstation.output;
+            float output = Bstation.output;
 
             // Broadcast to all stations and buffers
             for(Reservation_Station station : Add_Stations.values()) {
@@ -155,9 +188,24 @@ public class Main {
                 register.fillFromCDB(tag, output);
             }
             
-            // Clear the station/buffer that published
-            Bstation.clear();
+            // Record write cycle for this instruction
+            for (InstructionStatus status : issuedInstructions) {
+                if (status.tag != null && status.tag.equals(tag) && status.writeCycle == -1) {
+                    status.writeCycle = cycle + 1; // Write happens in the next cycle
+                    break;
+                }
+            }
+            
+            // Store the station to be cleared after parse completes
+            stationToClear = Bstation;
         }
+    }
+    
+    // Helper method to record instruction issue
+    public static void recordIssue(String tag, int instructionIndex) {
+        String instruction = instructions[instructionIndex];
+        InstructionStatus status = new InstructionStatus(instruction, instructionIndex, tag, cycle);
+        issuedInstructions.add(status);
     }
 
     public static void run(){

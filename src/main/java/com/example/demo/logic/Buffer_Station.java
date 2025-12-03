@@ -2,8 +2,9 @@ package com.example.demo.logic;
 
 public abstract class Buffer_Station extends RegBufStat {
     public int Busy;
-    public int output;
+    public float output;
     protected boolean queuedForPublish;
+    protected boolean executionStarted;  // Track if execution has started
 
     public boolean IsBusy(){
         return Busy == 1;
@@ -19,6 +20,15 @@ public abstract class Buffer_Station extends RegBufStat {
 
     protected void resetPublishState() {
         this.queuedForPublish = false;
+        this.executionStarted = false;
+    }
+    
+    protected boolean hasExecutionStarted() {
+        return executionStarted;
+    }
+    
+    protected void markExecutionStarted() {
+        this.executionStarted = true;
     }
     
     public abstract void publish(String tag);
