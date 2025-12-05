@@ -96,6 +96,7 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
     }
+// affff
 
     // ============================================================
     // =============== TAB CONTENT FUNCTIONS ======================
