@@ -48,7 +48,8 @@ public class Main {
     public static boolean running = true;
     public static int cycle = 0;    
     public static int curInstruction = 0;
-    public static int[] memory = new int[2048];
+    // Byte-addressable memory
+    public static byte[] memory = new byte[4096];
     public static HashMap<String, Register> registerMap = new HashMap<>();
     public static HashMap<String, Reservation_Station> Add_Stations = new HashMap<>();
     public static HashMap<String, Reservation_Station> Mul_Stations = new HashMap<>();
@@ -70,12 +71,21 @@ public class Main {
     public static int Inttime;
     public static int Loadtime;
     public static int Storetime;
+    // Cache configuration
+    public static int cacheHitLatency = 1;
+    public static int cacheMissPenalty = 4;
+    public static int cacheBlockSize = 16; // bytes
+    public static int cacheSizeBytes = 256; // bytes
+    public static DataCache dataCache = new DataCache(cacheBlockSize, cacheSizeBytes, cacheHitLatency, cacheMissPenalty);
     public static String[] instructions;
     public static int Acapacity = 3;
     public static int Mcapacity = 3;
     public static int Icapacity = 3;
     public static int Lcapacity = 3;
     public static int Scapacity = 3;
+
+    // Track cache block exclusivity (single-ported cache/memory). Key = block number, value = cycle when free.
+    public static HashMap<Integer, Integer> blockBusyUntil = new HashMap<>();
 
     // Store the station to be cleared after parse completes
     private static Buffer_Station stationToClear = null;
@@ -89,13 +99,14 @@ public class Main {
 
     // Execute one cycle of the Tomasulo algorithm
     public static void executeCycle() {
+        cycle++;
+        
+        releaseExpiredBlocks();
         publish();
         run();
         if (!running || instructions == null) {
             return;
         }
-
-        cycle++;
 
         if (curInstruction < instructions.length) {
             if (Parse.parse(instructions[curInstruction])){
@@ -127,6 +138,10 @@ public class Main {
         cycle = 0;
         curInstruction = 0;
         running = true;
+        // Reset memory and cache
+        memory = new byte[memory.length];
+        dataCache = new DataCache(cacheBlockSize, cacheSizeBytes, cacheHitLatency, cacheMissPenalty);
+        blockBusyUntil.clear();
         
         // Initialize all components
         Register.InitializeRegisters();
@@ -191,7 +206,7 @@ public class Main {
             // Record write cycle for this instruction
             for (InstructionStatus status : issuedInstructions) {
                 if (status.tag != null && status.tag.equals(tag) && status.writeCycle == -1) {
-                    status.writeCycle = cycle + 1; // Write happens in the next cycle
+                    status.writeCycle = cycle; // write-on-publish cycle
                     break;
                 }
             }
@@ -310,6 +325,37 @@ public static int countDependencies(String tag) {
     
     return count;
 }
+
+    // Cache-backed load word helper
+    public static DataCache.AccessResult loadWord(int address) {
+        return dataCache.loadWord(address, memory);
+    }
+
+    // Store word helper - write to memory and invalidate cache
+    public static void storeWord(int address, float value) {
+        int word = Float.floatToIntBits(value);
+        for (int i = 0; i < 4 && address + i < memory.length; i++) {
+            memory[address + i] = (byte) ((word >> (8 * i)) & 0xFF);
+        }
+        // Invalidate cache line containing this address
+        int blockNumber = address / cacheBlockSize;
+        int index = blockNumber % (cacheSizeBytes / cacheBlockSize);
+        dataCache.invalidateLine(index);
+    }
+
+    public static boolean isBlockBusy(int blockNumber) {
+        Integer until = blockBusyUntil.get(blockNumber);
+        return until != null && cycle < until;
+    }
+
+    public static void markBlockBusy(int blockNumber, int latency) {
+        int until = cycle + Math.max(0, latency);
+        blockBusyUntil.put(blockNumber, until);
+    }
+
+    public static void releaseExpiredBlocks() {
+        blockBusyUntil.entrySet().removeIf(e -> cycle >= e.getValue());
+    }
 
 
 }

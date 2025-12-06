@@ -1,14 +1,20 @@
 package com.example.demo.logic;
 
+import java.util.Arrays;
+
 public class Parse {
     public static boolean  parse(String instruction){
-        String[] token = instruction.split(" ");
-        if(token[0].endsWith(":")){
-          token[0]=token[1];
-          token[1]=token[2];
-          token[2]=token[3];
-          token[3]=token[4];
+        if (instruction == null || instruction.trim().isEmpty()) return false;
+
+        // Tokenize safely and drop label prefixes like "LOOP:"
+        String[] raw = instruction.trim().split("\\s+");
+        if (raw.length == 0) return false;
+        String[] token = raw;
+        if (raw[0].endsWith(":")) {
+            token = Arrays.copyOfRange(raw, 1, raw.length);
         }
+        if (token.length == 0) return false;
+
         switch (token[0]) {
             case "DADDI":
             return DADDI(token[1], token[2], token[3]);
@@ -40,30 +46,24 @@ public class Parse {
             case "DIV.S":
             return DIV_S(token[1], token[2], token[3]);
             //DIV.S F1, F2, F3
-            // case "LW":
-            // return LW(token[1], token[2], token[3]);
-            // //LW R1, 0(R2)
-            // case "LD":
-            // return LD(token[1], token[2], token[3]);
-            // //LD R1, 0(R2)
-            // case "L.S":
-            // return L_S(token[1], token[2], token[3]);
-            // //L.S F1, 0(R2)
-            // case "L.D":
-            // return L_D(token[1], token[2], token[3]);
-            // //L.D F1, 0(R2)
-            // case "SW":
-            // return SW(token[1], token[2], token[3]);
-            // //SW R1, 0(R2)
-            // case "SD":
-            // return SD(token[1], token[2], token[3]);
-            // //SD R1, 0(R2)
-            // case "S.S":
-            // return S_S(token[1], token[2], token[3]);
-            // //S.S F1, 0(R2)
-            // case "S.D":
-            // return S_D(token[1], token[2], token[3]);
-            // //S.D F1, 0(R2)
+            case "LW":
+            return LW(token[1], token[2]);
+            //LW R1, 0(R2)
+            case "L.S":
+            return L_S(token[1], token[2]);
+            //L.S F1, 0(R2)
+            case "L.D":
+            return L_D(token[1], token[2]);
+            //L.D F1, 0(R2)
+            case "SW":
+            return SW(token[1], token[2]);
+            //SW R1, 0(R2)
+            case "S.S":
+            return S_S(token[1], token[2]);
+            //S.S F1, 0(R2)
+            case "S.D":
+            return S_D(token[1], token[2]);
+            //S.D F1, 0(R2)
             case "BNE":
             return BNE(token[1], token[2], token[3]);
             //BNE R1, R2, label
@@ -257,6 +257,110 @@ public class Parse {
         return false;
     }
 
+    // ===================== LOADS WITH CACHE =====================
+    private static class OffsetBase {
+        int offset;
+        String base;
+        OffsetBase(int offset, String base){ this.offset = offset; this.base = base; }
+    }
+
+    private static OffsetBase decodeOffsetBase(String operand) {
+        String cleaned = operand.replace(",", "").trim();
+        int lParen = cleaned.indexOf('(');
+        int rParen = cleaned.indexOf(')');
+        int offset = 0;
+        String base = cleaned;
+        if (lParen != -1 && rParen != -1 && rParen > lParen) {
+            String offStr = cleaned.substring(0, lParen).trim();
+            offset = offStr.isEmpty() ? 0 : Integer.parseInt(offStr);
+            base = cleaned.substring(lParen + 1, rParen).trim();
+        }
+        return new OffsetBase(offset, base);
+    }
+
+    private static boolean issueLoad(String op, String dest, String offsetBase, int bytes) {
+        OffsetBase ob = decodeOffsetBase(offsetBase);
+        String baseReg = ob.base;
+        int offset = ob.offset;
+        if (!Main.registerMap.containsKey(baseReg)) {
+            return false;
+        }
+        Object baseValObj = Main.registerMap.get(baseReg).getValue();
+        float baseVal = (baseValObj instanceof Float) ? (Float) baseValObj : 0;
+        String Q = (baseValObj instanceof Float || baseValObj == null) ? null : (String) baseValObj;
+        int effectiveAddress = (Q == null) ? ((int) baseVal + offset) : offset; // address once base arrives
+
+        for (int i = 1; i <= Main.Lcapacity; i++) {
+            String tag = "L" + i;
+            if (!Main.Load_Buffer.get(tag).IsBusy()) {
+                Main.Load_Buffer.get(tag).issue(op, effectiveAddress, baseVal, Q, bytes);
+                Main.Load_Buffer.get(tag).stationTag = tag;
+                Main.Load_Buffer.get(tag).offset = offset;
+                String destReg = dest.replace(",", "").trim();
+                Main.registerMap.get(destReg).setQi(tag);
+                Main.recordIssue(tag, Main.curInstruction);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean LW(String dest, String operand) {
+        return issueLoad("LW", dest, operand, 4);
+    }
+
+    private static boolean L_S(String dest, String operand) {
+        return issueLoad("L.S", dest, operand, 4);
+    }
+
+    private static boolean L_D(String dest, String operand) {
+        return issueLoad("L.D", dest, operand, 4);
+    }
+
+    // ===================== STORES WITH CACHE =====================
+    private static boolean issueStore(String op, String src, String offsetBase, int bytes) {
+        OffsetBase ob = decodeOffsetBase(offsetBase);
+        String baseReg = ob.base;
+        int offset = ob.offset;
+        if (!Main.registerMap.containsKey(baseReg)) {
+            return false;
+        }
+        Object baseValObj = Main.registerMap.get(baseReg).getValue();
+        float baseVal = (baseValObj instanceof Float) ? (Float) baseValObj : 0;
+        String Qbase = (baseValObj instanceof Float || baseValObj == null) ? null : (String) baseValObj;
+        int effectiveAddress = (Qbase == null) ? ((int) baseVal + offset) : offset;
+
+        String srcReg = src.replace(",", "").trim();
+        if (!Main.registerMap.containsKey(srcReg)) {
+            return false;
+        }
+        Object srcValObj = Main.registerMap.get(srcReg).getValue();
+        float srcVal = (srcValObj instanceof Float) ? (Float) srcValObj : 0;
+        String Qsrc = (srcValObj instanceof Float || srcValObj == null) ? null : (String) srcValObj;
+
+        for (int i = 1; i <= Main.Scapacity; i++) {
+            String tag = "S" + i;
+            if (!Main.Store_Buffer.get(tag).IsBusy()) {
+                Main.Store_Buffer.get(tag).issueStore(op, effectiveAddress, baseVal, Qbase, srcVal, Qsrc, bytes, offset);
+                Main.Store_Buffer.get(tag).stationTag = tag;
+                Main.recordIssue(tag, Main.curInstruction);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean SW(String src, String operand) {
+        return issueStore("SW", src, operand, 4);
+    }
+
+    private static boolean S_S(String src, String operand) {
+        return issueStore("S.S", src, operand, 4);
+    }
+
+    private static boolean S_D(String src, String operand) {
+        return issueStore("S.D", src, operand, 4);
+    }
 
 
     // Load/Store instructions - commented out for now

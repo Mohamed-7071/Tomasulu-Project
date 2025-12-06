@@ -5,6 +5,8 @@ public abstract class Buffer_Station extends RegBufStat {
     public float output;
     protected boolean queuedForPublish;
     protected boolean executionStarted;  // Track if execution has started
+    public String stationTag;            // Identifier for timing bookkeeping
+    protected int issuedCycle = -1;      // Cycle when the station was issued
 
     public boolean IsBusy(){
         return Busy == 1;
@@ -21,6 +23,7 @@ public abstract class Buffer_Station extends RegBufStat {
     protected void resetPublishState() {
         this.queuedForPublish = false;
         this.executionStarted = false;
+        this.issuedCycle = -1;
     }
     
     protected boolean hasExecutionStarted() {

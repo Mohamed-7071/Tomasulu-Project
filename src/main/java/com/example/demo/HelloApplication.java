@@ -12,6 +12,7 @@ import javafx.stage.Stage;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.cell.TextFieldTableCell;
 
 public class HelloApplication extends Application {
 
@@ -27,6 +28,13 @@ public class HelloApplication extends Application {
     private TableView<BufferRow> loadBuffersTable;
     private TableView<BufferRow> storeBuffersTable;
     private TableView<RegisterRow> registerTable;
+    private TableView<CacheLineRow> cacheLinesTable;
+    private TableView<MemoryRow> memoryTable;
+    private Label cacheHitLabel;
+    private Label cacheMissLabel;
+    private Label cacheBlockLabel;
+    private Label cacheSizeLabel;
+    private Label cacheLinesLabel;
     private TextArea logArea;
 
     @Override
@@ -68,12 +76,16 @@ public class HelloApplication extends Application {
         Tab cacheTab = new Tab("Cache");
         cacheTab.setContent(buildCacheView());
 
+        Tab memoryTab = new Tab("Memory");
+        memoryTab.setContent(buildMemoryView());
+
         tabPane.getTabs().addAll(
             instructionQueueTab,
             reservationStationsTab,
             loadStoreTab,
             registerFileTab,
-            cacheTab
+            cacheTab,
+            memoryTab
         );
 
         // ========== BOTTOM LOG ==========
@@ -216,13 +228,23 @@ public class HelloApplication extends Application {
         TableColumn<BufferRow, String> qCol = new TableColumn<>("Q");
         qCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getQ()));
 
-        table.getColumns().addAll(nameCol, busyCol, addressCol, vCol, qCol);
+        TableColumn<BufferRow, String> opCol = new TableColumn<>("Op");
+        opCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOp()));
+
+        TableColumn<BufferRow, String> offsetCol = new TableColumn<>("Offset");
+        offsetCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOffset()));
+
+        TableColumn<BufferRow, String> timeCol = new TableColumn<>("Time");
+        timeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTime()));
+
+        table.getColumns().addAll(nameCol, busyCol, opCol, addressCol, offsetCol, vCol, qCol, timeCol);
 
         return table;
     }
 
     private Node buildRegisterFileView() {
         registerTable = new TableView<>();
+        registerTable.setEditable(true);
         VBox.setVgrow(registerTable, Priority.ALWAYS);
 
         TableColumn<RegisterRow, String> regCol = new TableColumn<>("Register");
@@ -230,6 +252,12 @@ public class HelloApplication extends Application {
         
         TableColumn<RegisterRow, String> valueCol = new TableColumn<>("Value");
         valueCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getValue()));
+        valueCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        valueCol.setOnEditCommit(evt -> {
+            RegisterRow row = evt.getRowValue();
+            applyRegisterEdit(row, evt.getNewValue());
+            registerTable.refresh();
+        });
         
         TableColumn<RegisterRow, String> qiCol = new TableColumn<>("Qi");
         qiCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getQi()));
@@ -243,9 +271,86 @@ public class HelloApplication extends Application {
     }
 
     private Node buildCacheView() {
-        Label msg = new Label("Cache Configuration will be displayed after simulation starts");
-        msg.setPadding(new Insets(20));
-        return new StackPane(msg);
+        cacheHitLabel = new Label();
+        cacheMissLabel = new Label();
+        cacheBlockLabel = new Label();
+        cacheSizeLabel = new Label();
+        cacheLinesLabel = new Label();
+
+        cacheLinesTable = new TableView<>();
+        cacheLinesTable.setEditable(true);
+        cacheLinesTable.setPrefHeight(240);
+        TableColumn<CacheLineRow, String> lineCol = new TableColumn<>("Line");
+        lineCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getIndex()));
+        TableColumn<CacheLineRow, String> validCol = new TableColumn<>("Valid");
+        validCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getValid()));
+        validCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        validCol.setOnEditCommit(evt -> {
+            CacheLineRow row = evt.getRowValue();
+            applyCacheEdit(row, evt.getNewValue(), row.getTag(), row.getData());
+            cacheLinesTable.refresh();
+        });
+        TableColumn<CacheLineRow, String> tagCol = new TableColumn<>("Tag");
+        tagCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getTag()));
+        tagCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        tagCol.setOnEditCommit(evt -> {
+            CacheLineRow row = evt.getRowValue();
+            applyCacheEdit(row, row.getValid(), evt.getNewValue(), row.getData());
+            cacheLinesTable.refresh();
+        });
+        TableColumn<CacheLineRow, String> dataCol = new TableColumn<>("Data (hex)");
+        dataCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getData()));
+        dataCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        dataCol.setOnEditCommit(evt -> {
+            CacheLineRow row = evt.getRowValue();
+            applyCacheEdit(row, row.getValid(), row.getTag(), evt.getNewValue());
+            cacheLinesTable.refresh();
+        });
+        cacheLinesTable.getColumns().addAll(lineCol, validCol, tagCol, dataCol);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(8);
+        grid.setPadding(new Insets(16));
+
+        grid.add(new Label("Hit Latency:"), 0, 0);
+        grid.add(cacheHitLabel, 1, 0);
+        grid.add(new Label("Miss Penalty:"), 0, 1);
+        grid.add(cacheMissLabel, 1, 1);
+        grid.add(new Label("Block Size (bytes):"), 0, 2);
+        grid.add(cacheBlockLabel, 1, 2);
+        grid.add(new Label("Cache Size (bytes):"), 0, 3);
+        grid.add(cacheSizeLabel, 1, 3);
+        grid.add(new Label("Lines:"), 0, 4);
+        grid.add(cacheLinesLabel, 1, 4);
+
+        VBox wrapper = new VBox(12, grid, new Label("Lines:"), cacheLinesTable);
+        wrapper.setPadding(new Insets(10));
+        updateCacheSummary();
+        updateCacheLinesTable();
+        return wrapper;
+    }
+
+    private Node buildMemoryView() {
+        memoryTable = new TableView<>();
+        memoryTable.setEditable(true);
+        memoryTable.setPrefHeight(500);
+        TableColumn<MemoryRow, String> baseCol = new TableColumn<>("Base Addr");
+        baseCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBase()));
+        TableColumn<MemoryRow, String> bytesCol = new TableColumn<>("Bytes (hex)" );
+        bytesCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().getBytes()));
+        bytesCol.setCellFactory(TextFieldTableCell.forTableColumn());
+        bytesCol.setOnEditCommit(evt -> {
+            MemoryRow row = evt.getRowValue();
+            applyMemoryEdit(row, evt.getNewValue());
+            memoryTable.refresh();
+        });
+        memoryTable.getColumns().addAll(baseCol, bytesCol);
+
+        VBox wrapper = new VBox(10, new Label("Memory (16-byte rows):"), memoryTable);
+        wrapper.setPadding(new Insets(10));
+        updateMemoryTable();
+        return wrapper;
     }
 
     // ============================================================
@@ -310,6 +415,11 @@ public class HelloApplication extends Application {
         TextField intLatency = new TextField(String.valueOf(Main.Inttime));
         TextField loadLatency = new TextField(String.valueOf(Main.Loadtime));
         TextField storeLatency = new TextField(String.valueOf(Main.Storetime));
+
+        TextField cacheHitField = new TextField(String.valueOf(Main.cacheHitLatency));
+        TextField cacheMissField = new TextField(String.valueOf(Main.cacheMissPenalty));
+        TextField cacheBlockField = new TextField(String.valueOf(Main.cacheBlockSize));
+        TextField cacheSizeField = new TextField(String.valueOf(Main.cacheSizeBytes));
         
         TextField addCap = new TextField(String.valueOf(Main.Acapacity));
         TextField mulCap = new TextField(String.valueOf(Main.Mcapacity));
@@ -327,6 +437,15 @@ public class HelloApplication extends Application {
         grid.add(loadLatency, 1, 3);
         grid.add(new Label("Store Latency:"), 0, 4);
         grid.add(storeLatency, 1, 4);
+
+        grid.add(new Label("Cache Hit Latency:"), 0, 5);
+        grid.add(cacheHitField, 1, 5);
+        grid.add(new Label("Cache Miss Penalty:"), 0, 6);
+        grid.add(cacheMissField, 1, 6);
+        grid.add(new Label("Cache Block Size:"), 0, 7);
+        grid.add(cacheBlockField, 1, 7);
+        grid.add(new Label("Cache Size (bytes):"), 0, 8);
+        grid.add(cacheSizeField, 1, 8);
         
         grid.add(new Label("Add Capacity:"), 2, 0);
         grid.add(addCap, 3, 0);
@@ -357,6 +476,13 @@ public class HelloApplication extends Application {
                 Main.Icapacity = Integer.parseInt(intCap.getText());
                 Main.Lcapacity = Integer.parseInt(loadCap.getText());
                 Main.Scapacity = Integer.parseInt(storeCap.getText());
+
+                Main.cacheHitLatency = Integer.parseInt(cacheHitField.getText());
+                Main.cacheMissPenalty = Integer.parseInt(cacheMissField.getText());
+                Main.cacheBlockSize = Integer.parseInt(cacheBlockField.getText());
+                Main.cacheSizeBytes = Integer.parseInt(cacheSizeField.getText());
+                Main.dataCache = new DataCache(Main.cacheBlockSize, Main.cacheSizeBytes, Main.cacheHitLatency, Main.cacheMissPenalty);
+                updateCacheSummary();
                 
                 if (logArea != null) {
                     logArea.appendText("Configuration updated\n");
@@ -433,7 +559,27 @@ public class HelloApplication extends Application {
             if (loadBuffersTable != null) updateBufferTable(loadBuffersTable, Main.Load_Buffer);
             if (storeBuffersTable != null) updateBufferTable(storeBuffersTable, Main.Store_Buffer);
             if (registerTable != null) updateRegisterTable();
+            updateCacheSummary();
+            updateCacheLinesTable();
+            updateMemoryTable();
         });
+    }
+
+    private void updateCacheSummary() {
+        if (cacheHitLabel == null) return;
+        Runnable updater = () -> {
+            cacheHitLabel.setText(String.valueOf(Main.cacheHitLatency));
+            cacheMissLabel.setText(String.valueOf(Main.cacheMissPenalty));
+            cacheBlockLabel.setText(String.valueOf(Main.cacheBlockSize));
+            cacheSizeLabel.setText(String.valueOf(Main.cacheSizeBytes));
+            int lines = Math.max(1, Main.cacheSizeBytes / Math.max(1, Main.cacheBlockSize));
+            cacheLinesLabel.setText(String.valueOf(lines));
+        };
+        if (Platform.isFxApplicationThread()) {
+            updater.run();
+        } else {
+            Platform.runLater(updater);
+        }
     }
     
     private void updateReservationStationTable(TableView<StationRow> table, java.util.HashMap<String, Reservation_Station> stations) {
@@ -453,6 +599,118 @@ public class HelloApplication extends Application {
         }
         table.setItems(data);
     }
+
+    private void updateCacheLinesTable() {
+        if (cacheLinesTable == null) return;
+        DataCache cache = Main.dataCache;
+        if (cache == null) {
+            cacheLinesTable.setItems(FXCollections.observableArrayList());
+            return;
+        }
+        ObservableList<CacheLineRow> data = FXCollections.observableArrayList();
+        for (int i = 0; i < cache.getNumLines(); i++) {
+            DataCache.CacheLineSnapshot snap = cache.getLineSnapshot(i);
+            data.add(new CacheLineRow(
+                String.valueOf(snap.index),
+                snap.valid ? "Yes" : "No",
+                String.valueOf(snap.tag),
+                bytesToHex(snap.bytes)
+            ));
+        }
+        cacheLinesTable.setItems(data);
+    }
+
+    private void updateMemoryTable() {
+        if (memoryTable == null) return;
+        byte[] mem = Main.memory;
+        if (mem == null) {
+            memoryTable.setItems(FXCollections.observableArrayList());
+            return;
+        }
+        int rowSize = 16;
+        ObservableList<MemoryRow> data = FXCollections.observableArrayList();
+        for (int base = 0; base < mem.length; base += rowSize) {
+            int len = Math.min(rowSize, mem.length - base);
+            byte[] slice = new byte[len];
+            System.arraycopy(mem, base, slice, 0, len);
+            data.add(new MemoryRow(String.valueOf(base), bytesToHex(slice)));
+        }
+        memoryTable.setItems(data);
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            sb.append(String.format("%02X", bytes[i]));
+            if (i < bytes.length - 1) sb.append(" ");
+        }
+        return sb.toString();
+    }
+
+    private byte[] intToBytesLE(int value, int maxBytes) {
+        int len = Math.max(1, Math.min(4, maxBytes));
+        byte[] out = new byte[len];
+        for (int i = 0; i < len; i++) {
+            out[i] = (byte) ((value >> (8 * i)) & 0xFF);
+        }
+        return out;
+    }
+
+    private byte[] parseHexBytes(String input, int maxBytes) {
+        if (input == null) return new byte[0];
+        String trimmed = input.trim();
+        if (trimmed.isEmpty()) return new byte[0];
+        String[] parts = trimmed.split("\\s+");
+        int len = Math.min(maxBytes, parts.length);
+        byte[] out = new byte[len];
+        for (int i = 0; i < len; i++) {
+            try {
+                out[i] = (byte) Integer.parseInt(parts[i], 16);
+            } catch (NumberFormatException ex) {
+                out[i] = 0;
+            }
+        }
+        return out;
+    }
+
+    private void applyCacheEdit(CacheLineRow row, String validStr, String tagStr, String dataStr) {
+        DataCache cache = Main.dataCache;
+        if (cache == null) return;
+        boolean valid = validStr != null && (validStr.equalsIgnoreCase("yes") || validStr.equals("1") || validStr.equalsIgnoreCase("true"));
+        int tag = 0;
+        try { tag = Integer.parseInt(tagStr); } catch (NumberFormatException ignored) { }
+        byte[] bytes = parseHexBytes(dataStr, cache.getBlockSize());
+        int idx = 0;
+        try { idx = Integer.parseInt(row.getIndex()); } catch (NumberFormatException ignored) { }
+        cache.setLine(idx, valid, tag, bytes);
+        // refresh snapshot
+        updateCacheLinesTable();
+    }
+
+    private void applyMemoryEdit(MemoryRow row, String dataStr) {
+        byte[] mem = Main.memory;
+        if (mem == null) return;
+        int base = 0;
+        try { base = Integer.parseInt(row.getBase()); } catch (NumberFormatException ignored) { }
+        byte[] bytes = parseHexBytes(dataStr, 16);
+        for (int i = 0; i < bytes.length; i++) {
+            int addr = base + i;
+            if (addr >= 0 && addr < mem.length) {
+                mem[addr] = bytes[i];
+            }
+        }
+        updateMemoryTable();
+    }
+
+    private void applyRegisterEdit(RegisterRow row, String newValStr) {
+        if (row == null) return;
+        String reg = row.getRegister();
+        if (!Main.registerMap.containsKey(reg)) return;
+        float val = 0f;
+        try { val = Float.parseFloat(newValStr); } catch (NumberFormatException ignored) { }
+        Main.registerMap.get(reg).setValue(val);
+        updateRegisterTable();
+    }
     
     private void updateBufferTable(TableView<BufferRow> table, java.util.HashMap<String, Buffer> buffers) {
         ObservableList<BufferRow> data = FXCollections.observableArrayList();
@@ -461,9 +719,12 @@ public class HelloApplication extends Application {
             data.add(new BufferRow(
                 key,
                 buffer.Busy == 1 ? "Yes" : "No",
+                buffer.op != null ? buffer.op : "-",
                 String.valueOf(buffer.Address),
+                String.valueOf(buffer.offset),
                 String.valueOf(buffer.V),
-                buffer.Q != null ? buffer.Q : "-"
+                buffer.Q != null ? buffer.Q : "-",
+                buffer.Executing_Time >= 0 ? String.valueOf(buffer.Executing_Time) : "-"
             ));
         }
         table.setItems(data);
@@ -542,23 +803,64 @@ public class HelloApplication extends Application {
     public static class BufferRow {
         private final SimpleStringProperty name;
         private final SimpleStringProperty busy;
+        private final SimpleStringProperty op;
         private final SimpleStringProperty address;
+        private final SimpleStringProperty offset;
         private final SimpleStringProperty v;
         private final SimpleStringProperty q;
+        private final SimpleStringProperty time;
         
-        public BufferRow(String name, String busy, String address, String v, String q) {
+        public BufferRow(String name, String busy, String op, String address, String offset, String v, String q, String time) {
             this.name = new SimpleStringProperty(name);
             this.busy = new SimpleStringProperty(busy);
+            this.op = new SimpleStringProperty(op);
             this.address = new SimpleStringProperty(address);
+            this.offset = new SimpleStringProperty(offset);
             this.v = new SimpleStringProperty(v);
             this.q = new SimpleStringProperty(q);
+            this.time = new SimpleStringProperty(time);
         }
         
         public String getName() { return name.get(); }
         public String getBusy() { return busy.get(); }
+        public String getOp() { return op.get(); }
         public String getAddress() { return address.get(); }
+        public String getOffset() { return offset.get(); }
         public String getV() { return v.get(); }
         public String getQ() { return q.get(); }
+        public String getTime() { return time.get(); }
+    }
+
+    public static class CacheLineRow {
+        private final SimpleStringProperty index;
+        private final SimpleStringProperty valid;
+        private final SimpleStringProperty tag;
+        private final SimpleStringProperty data;
+
+        public CacheLineRow(String index, String valid, String tag, String data) {
+            this.index = new SimpleStringProperty(index);
+            this.valid = new SimpleStringProperty(valid);
+            this.tag = new SimpleStringProperty(tag);
+            this.data = new SimpleStringProperty(data);
+        }
+
+        public String getIndex() { return index.get(); }
+        public String getValid() { return valid.get(); }
+        public String getTag() { return tag.get(); }
+        public String getData() { return data.get(); }
+    }
+
+    public static class MemoryRow {
+        private final SimpleStringProperty base;
+        private final SimpleStringProperty bytes;
+
+        public MemoryRow(String base, String bytes) {
+            this.base = new SimpleStringProperty(base);
+            this.bytes = new SimpleStringProperty(bytes);
+        }
+
+        public String getBase() { return base.get(); }
+        public String getBytes() { return bytes.get(); }
     }
     
     public static class RegisterRow {

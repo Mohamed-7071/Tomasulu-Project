@@ -19,6 +19,7 @@ public class Reservation_Station extends Buffer_Station {
         this.Qj = Qj;
         this.Qk = Qk;
         this.Executing_Time = Main.getExecutionTime(op);
+        this.issuedCycle = Main.cycle;
         resetPublishState();
     }
 
@@ -67,6 +68,11 @@ public class Reservation_Station extends Buffer_Station {
         }
 
         if(this.Qj != null || this.Qk != null) {
+            return;
+        }
+
+        // Prevent starting in same cycle as issue
+        if (this.issuedCycle >= 0 && Main.cycle <= this.issuedCycle) {
             return;
         }
 
