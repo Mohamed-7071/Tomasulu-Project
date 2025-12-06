@@ -716,6 +716,8 @@ public class HelloApplication extends Application {
         ObservableList<BufferRow> data = FXCollections.observableArrayList();
         for (String key : buffers.keySet()) {
             Buffer buffer = buffers.get(key);
+            // For stores, show store-value dependency; for loads, show nothing in Q column
+            String qDisplay = buffer.storeQ != null ? buffer.storeQ : "-";
             data.add(new BufferRow(
                 key,
                 buffer.Busy == 1 ? "Yes" : "No",
@@ -723,7 +725,7 @@ public class HelloApplication extends Application {
                 String.valueOf(buffer.Address),
                 String.valueOf(buffer.offset),
                 String.valueOf(buffer.V),
-                buffer.Q != null ? buffer.Q : "-",
+                qDisplay,
                 buffer.Executing_Time >= 0 ? String.valueOf(buffer.Executing_Time) : "-"
             ));
         }

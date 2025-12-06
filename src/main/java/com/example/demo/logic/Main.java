@@ -176,6 +176,12 @@ public class Main {
             pair CDB = toBePublished.remove();
             String tag = CDB.getTag();
             Buffer_Station Bstation = CDB.getValue();
+
+            // For stores, commit to memory at publish (write stage) one cycle after exec end
+            if (Bstation instanceof Buffer) {
+                Buffer buf = (Buffer) Bstation;
+                buf.commitIfPending();
+            }
             float output = Bstation.output;
 
             // Broadcast to all stations and buffers

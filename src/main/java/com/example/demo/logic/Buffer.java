@@ -12,6 +12,8 @@ public class Buffer extends Buffer_Station {
     public int offset = 0; // for effective address calc when base pending
     public float storeValue = 0; // value to store (for stores)
     public String storeQ = null; // pending tag for store value
+    private boolean storeCommitted = false; // ensure store writes once at completion
+    private boolean storePendingWriteback = false; // commit store one cycle later at publish
     
 
     public void issue(String op, int address, float v, String q, int bytesRequested){
@@ -25,6 +27,8 @@ public class Buffer extends Buffer_Station {
         this.issuedCycle = Main.cycle;
         this.storeValue = 0;
         this.storeQ = null;
+        this.storeCommitted = false;
+        this.storePendingWriteback = false;
         resetPublishState();
     }
 
@@ -40,6 +44,8 @@ public class Buffer extends Buffer_Station {
         this.storeValue = srcVal;
         this.storeQ = Qsrc;
         this.offset = offset;
+        this.storeCommitted = false;
+        this.storePendingWriteback = false;
         resetPublishState();
     }
 
@@ -110,8 +116,7 @@ public class Buffer extends Buffer_Station {
 
         if (Executing_Time == -1) {
             if (isStore) {
-                // Store: write to memory
-                Main.storeWord(Address, storeValue);
+                // Store: wait for latency, defer memory write until completion
                 this.Executing_Time = Main.Storetime;
                 Main.markBlockBusy(blockNumber, Main.Storetime);
             } else {
@@ -131,6 +136,10 @@ public class Buffer extends Buffer_Station {
         }
 
         if (Executing_Time == 0) {
+            if (isStore && !storeCommitted) {
+                // Defer actual memory write to publish phase (write stage)
+                storePendingWriteback = true;
+            }
             // Record execution end
             for (Main.InstructionStatus status : Main.issuedInstructions) {
                 if (status.tag != null && status.tag.equals(this.stationTag) && status.execEndCycle == -1) {
@@ -154,7 +163,27 @@ public class Buffer extends Buffer_Station {
         this.stationTag = null;
         this.storeValue = 0;
         this.storeQ = null;
+        this.storeCommitted = false;
+        this.storePendingWriteback = false;
         resetPublishState();
+    }
+
+    public boolean isStoreOp() {
+        return op != null && (op.equals("SW") || op.equals("S.S") || op.equals("S.D"));
+    }
+
+    /**
+     * Commit a pending store exactly once during publish (write stage).
+     * Returns true if a commit occurred this call.
+     */
+    public boolean commitIfPending() {
+        if (isStoreOp() && storePendingWriteback && !storeCommitted) {
+            Main.storeWord(Address, storeValue);
+            storeCommitted = true;
+            storePendingWriteback = false;
+            return true;
+        }
+        return false;
     }
 
     
